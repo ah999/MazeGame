@@ -1,211 +1,209 @@
 from enum import Enum
 from builtins import classmethod
 
-class MapSide():
-
-    def enter(self):
-        raise NotImplementedError('Doesn"t implemented yet')
-
+class MapSite():
+    def Enter(self):
+        raise NotImplementedError('Abstract Base Class method')
 
 class Direction(Enum):
     North = 0
-    South = 1
-    East = 2
-    West = 3
+    East  = 1
+    South = 2
+    West  = 3
 
-
-class Room(MapSide):
-
+class Room(MapSite):
     def __init__(self, roomNo):
+        self._sides = [MapSite] * 4
         self._roomNumber = int(roomNo)
-        self._sides = [MapSide]*4
 
-    def enter(self):
-        print("***** you've just entered the room *****   ")
-
-    def set_side(self, Direction, MapSide):
-        self._sides[Direction] = MapSide
-
-    def get_side(self, Direction):
+    def GetSide(self, Direction):
         return self._sides[Direction]
 
+    def SetSide(self, Direction, MapSite):
+        self._sides[Direction] = MapSite
 
-class Wall(MapSide):
+    def Enter(self):
+        print('    You have entered room: ' + str(self._roomNumber))
 
-    def enter(self):
-        print(" * it's a wall watch your head!! * ")
+class Wall(MapSite):
+    def Enter(self):
+        print('    You just ran into a Wall...')
 
-
-class Door(MapSide):
-
+class Door(MapSite):
     def __init__(self, Room1=None, Room2=None):
         self._room1 = Room1
         self._room2 = Room2
         self._isOpen = False
 
-    def enter(self):
-        if self._isOpen == True: print("***  the door is open you can pass over!!  *** ")
-        else: print("* you need to open the door first to pass!! * ")
-
-    def other_side(self, Room):
-        print("this door is a side of a room number: {} ".format(Room._roomNumber))
+    def OtherSideFrom(self, Room):
+        print('\tDoor obj: This door is a side of Room: {}'.format(Room._roomNumber))
         if 1 == Room._roomNumber:
             other_room = self._room2
         else:
             other_room = self._room1
         return other_room
 
+    def Enter(self):
+        if self._isOpen: print('    **** You have passed through this door...')
+        else: print('    ** This door needs to be opened before you can pass through it...')
 
 class Maze():
-
     def __init__(self):
+        # dictionary to hold room_number, room_obj <key, value> pairs
         self._rooms = {}
 
-    def set_room(self, room):
+    def AddRoom(self, room):
+        # use roomNumber as lookup value to retrieve room object
         self._rooms[room._roomNumber] = room
 
-    def get_room_number(self, room_number):
+    def RoomNo(self, room_number):
         return self._rooms[room_number]
-
 
 class MazeFactory():
     @classmethod
-    def make_maze(cls):
+    def MakeMaze(cls):
         return Maze()
 
     @classmethod
-    def make_wall(cls):
+    def MakeWall(cls):
         return Wall()
 
     @classmethod
-    def make_door(cls, r1, r2):
-        return Door(r1, r2)
+    def MakeRoom(cls, n):
+        return Room(n)
 
     @classmethod
-    def make_room(cls, rN):
-        return Room(rN)
+    def MakeDoor(cls, r1, r2):
+        return Door(r1, r2)
 
+#Extend MazeFactory
+class EnchantedMazeFactory(MazeFactory):
+    @classmethod
+    def MakeRoom(cls, n):
+        return EnchantedRoom(n, cls.CastSpell())
 
-class Spell():
+    @classmethod
+    def MakeDoor(cls, r1, r2):
+        return DoorNeedingSpell(r1, r2)
 
-    def __repr__(self):
-        return "a hard coded spell !!     "
-
-class EnchantedDoor(Door):
-
-    def __init__(self, r1, r2):
-        super(EnchantedDoor, self).__init__(r1, r2)
-        self.spell = Spell()
-
-    def enter(self):
-        print("****   this door needs a spell   ****", self.spell)
-        if self._isOpen == True:
-            print("***  the door is open you can pass over!!  *** ")
-        else:
-            print("* you need to open the door first to pass!! * ")
+    @classmethod
+    def CastSpell(cls):
+        return Spell()
 
 class EnchantedRoom(Room):
     def __init__(self, roomNo, aSpell):
         super(EnchantedRoom, self).__init__(roomNo)
-        print("the spell is ", aSpell)
+        print('The spell is: ', aSpell)
 
+class Spell():
+    def __repr__(self):
+        return '"A hard-coded spell"'
 
-class EnchantedMazeFactroy(MazeFactory):
+class DoorNeedingSpell(Door):
+    def __init__(self, r1, r2):
+        super(DoorNeedingSpell, self).__init__(r1, r2)
+        self.spell = Spell()
 
-    @classmethod
-    def cast_spell(cls):
-        return Spell()
+        def Enter(self):
+            print('    + This door needs a spell...', self.spell)
+            if self._isOpen:
+                print('    **** You have passed through this door...')
+            else:
+                print('    ** This door needs to be opened before you can pass through it...')
 
-    @classmethod
-    def make_door(cls, r1, r2):
-        return EnchantedDoor(r1, r2)
+#Extend MazeFactory for Bombs MazeFactory
 
-    @classmethod
-    def make_room(cls, n):
-        return EnchantedRoom(n, cls.cast_spell())
-
+#Creating the Maze Game
 class MazeGame():
+    # Abstract Factory
+    def CreateMaze(self, factory=MazeFactory):
+        aMaze = factory.MakeMaze()
+        r1 = factory.MakeRoom(1)
+        r2 = factory.MakeRoom(2)
+        theDoor = factory.MakeDoor(r1, r2)
 
-    def create_maze(self, factory=MazeFactory):
+        aMaze.AddRoom(r1)
+        aMaze.AddRoom(r2)
 
-        maze = factory.make_maze()
-        room1 = factory.make_room(1)
-        room2 = factory.make_room(2)
-        door = factory.make_door(room1, room2)
+        r1.SetSide(Direction.North.value, factory.MakeWall())
+        r1.SetSide(Direction.East.value, theDoor)
+        r1.SetSide(Direction.South.value, factory.MakeWall())
+        r1.SetSide(Direction.West.value, factory.MakeWall())
 
-        # maze creation
-        maze.set_room(room1)
-        maze.set_room(room2)
+        r2.SetSide(Direction(0).value, factory.MakeWall())
+        r2.SetSide(Direction(1).value, factory.MakeWall())
+        r2.SetSide(Direction(2).value, factory.MakeWall())
+        r2.SetSide(Direction(3).value, theDoor)
 
-        # Creating room 1
-        room1.set_side(Direction.North.value, factory.make_wall())
-        room1.set_side(Direction.South.value, factory.make_wall())
-        room1.set_side(Direction.East.value, door)
-        room1.set_side(Direction.West.value, factory.make_wall())
+        return aMaze
 
-        # Creating room2
-        room2.set_side(Direction.North.value, factory.make_wall())
-        room2.set_side(Direction.South.value, factory.make_wall())
-        room2.set_side(Direction.East.value, factory.make_wall())
-        room2.set_side(Direction.West.value, door)
-
-
-        return maze
-
+#===================================================
+# Self-testing section
+#===================================================
 if __name__ == '__main__':
+#     map_site_inst = MapSite()
+#     map_site_inst.Enter()
 
-    def find_maze_rooms(maze_obj):
+    #Common Code Moved Into a Function
+    def find_maze_rooms(maze_obj): #pass the maze_obj into the function
+        # find its rooms
         maze_rooms = []
-        for room_number in range(4):
+        for room_number in range(5):
             try:
-                room = maze_obj.get_room_number(room_number)
-                print("*** maze has {} rooms  ***".format(room_number, room))
-                print("**** entering the room ........>  ****")
-                room.enter()
+                # get the room number
+                room = maze_obj.RoomNo(room_number)
+                print('\n^^^ Maze has room: {}'.format(room_number, room))
+                print('    Entering the room...')
+                room.Enter()
+                # append rooms to list
                 maze_rooms.append(room)
-                for side in range(4):
-                    current_side = room.get_side(side)
-                    side_str = str(current_side.__class__).replace("<class '__main__.", "").replace("'>", "")
-                    print('    Room: {}, {:<15s}, Type: {}'.format(room_number, Direction(side), side_str))
-                    print('    Trying to enter: ', Direction(side))
-                    current_side.enter()
+                for idx in range(4):
+                    side = room.GetSide(idx)
+                    side_str = str(side.__class__).replace("<class '__main__.", "").replace("'>", "")
+                    print('    Room: {}, {:<15s}, Type: {}'.format(room_number, Direction(idx), side_str))
+                    print('    Trying to enter: ', Direction(idx))
+                    side.Enter()
                     if 'Door' in side_str:
-                        door = current_side
+                        door = side
                         if not door._isOpen:
-                            print("****  the door is opening ..... ****")
+                            print('    *** Opening the door...')
                             door._isOpen = True
-                            door.enter()
-
-                        print(door)
-                        other_room = door.other_side(room)
-                        print("***  on the other side room {}  ***".format(other_room._roomNumber))
-                        break
-
-
+                            door.Enter()
+                        print('\t', door)
+                        # get the room on the other side of the door
+                        other_room = door.OtherSideFrom(room)
+                        print('\tOn the other side of the door is Room: {}\n'.format(other_room._roomNumber))
 
             except KeyError:
-                print("no room ",room_number)
-        room_numbers = len(maze_rooms)
-        print("the maze has {} rooms".format(room_numbers))
-        print("########  end of game  ########")
+                print('No room:', room_number)
+        num_of_rooms = len(maze_rooms)
+        print('\nThere are {} rooms in the Maze.'.format(num_of_rooms))
+        print('Both doors are the same object and they are on the East and West side of the two rooms.')
 
+########################################################
 
-    print("*"*21)
-    print("***  the game will start  ***")
-    print("*"*21)
+#moving the game play into a function
+    print('\n')
+    num_of_stars = 20
+    print('*' * num_of_stars)
+    print('*** The Maze Game ***')
+    print('*' * num_of_stars)
 
     factory = MazeFactory
     print(factory)
+    print('=' * num_of_stars)
 
-    maze_obj = MazeGame.create_maze(factory)
+    maze_obj = MazeGame().CreateMaze(factory)
     find_maze_rooms(maze_obj)
 
-    print("*"*21)
-    print("***  the game will start  ***")
-    print("*"*21)
+    print('\n')
+    print('*' * num_of_stars)
+    print('*** The Maze Game ***')
+    print('*' * num_of_stars)
 
-    factory = EnchantedMazeFactroy
+    factory = EnchantedMazeFactory
     print(factory)
+    print('=' * num_of_stars)
 
-    maze_obj = MazeGame.create_maze(factory)
+    maze_obj = MazeGame().CreateMaze(factory)
     find_maze_rooms(maze_obj)
