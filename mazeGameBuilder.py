@@ -204,7 +204,7 @@ if __name__ == '__main__':
 
 
     print("*" * 21)
-    print("***  the game will start  ***")
+    print("***  the counting will start  ***")
     print("*" * 21)
 
     builder = CountingMazeBuilder()
