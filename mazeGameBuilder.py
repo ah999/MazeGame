@@ -69,20 +69,15 @@ class Maze():
 
 
 class MazeBuilder():
-    def __init__(self):
-        pass
+    def __init__(self): pass
 
-    def build_room(self, rN):
-        pass
+    def build_room(self, rN): pass
 
-    def build_door(self, r1, r2):
-        pass
+    def build_door(self, r1, r2): pass
 
-    def build_maze(self):
-        pass
+    def build_maze(self): pass
 
-    def get_maze(self):
-        return None
+    def get_maze(self): return None
 
 
 class MazeGame():
@@ -103,24 +98,18 @@ class MazeGame():
 
 class Interface_StanderMazeBuilder(MazeBuilder):
 
+    def __init__(self): pass
 
-    def __init__(self):
-        pass
+    def build_room(self, rN): pass
 
-    def build_room(self, rN):
-        pass
+    def build_door(self, r1, r2): pass
 
-    def build_door(self, r1, r2):
-        pass
+    def build_maze(self): pass
 
-    def build_maze(self):
-        pass
+    def get_maze(self): return Maze
 
-    def get_maze(self):
-        return Maze
+    def common_wall(self, r1, r2): return Direction
 
-    def common_wall(self, r1, r2):
-        return Direction
     _currentMaze = Maze
 
 
@@ -169,6 +158,37 @@ class StanderMazeBuilder(MazeBuilder):
             return Direction.West.value
 
 
+class Interface_CountingMazeBuilder(MazeBuilder):
+
+    def __init__(self):
+        self._rooms
+        self.doors
+
+    def build_room(self, rN): pass
+
+    def build_door(self, r1, r2): pass
+
+    def build_maze(self): pass
+
+    def add_wall(self, n, Direction): pass
+
+    def get_count(self): return tuple()
+
+
+class CountingMazeBuilder(MazeBuilder):
+
+    def __init__(self):
+        self._rooms = 0
+        self._doors = 0
+
+    def build_door(self, r1, r2):
+        self._doors += 1
+
+    def build_room(self, rN):
+        self._rooms += 1
+
+    def get_count(self):
+        return self._rooms, self._doors
 
 if __name__ == '__main__':
     print("*" * 21)
@@ -181,3 +201,14 @@ if __name__ == '__main__':
 
     game.create_maze(builder)
     maze = builder.get_maze()
+
+
+    print("*" * 21)
+    print("***  the game will start  ***")
+    print("*" * 21)
+
+    builder = CountingMazeBuilder()
+    game.create_maze(builder)
+    rooms, doors = builder.get_count()
+
+    print('number of doors {} and rooms {}'.format(doors, rooms))
